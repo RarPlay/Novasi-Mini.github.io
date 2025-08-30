@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Novasi Mini</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #111; color: #eee; display: flex; justify-content: center; align-items: center; height: 100vh; }
+    #chat { width: 400px; max-width: 90%; background: #222; padding: 20px; border-radius: 12px; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
+    #messages { height: 300px; overflow-y: auto; margin-bottom: 10px; border: 1px solid #444; padding: 10px; border-radius: 8px; }
+    .msg { margin: 5px 0; }
+    .user { color: #00ff90; }
+    .bot { color: #ffcc00; }
+    input, button { padding: 10px; border: none; border-radius: 8px; }
+    input { width: 70%; }
+    button { background: #00ff90; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div id="chat">
+    <h2>🤖 Novasi Mini</h2>
+    <div id="messages"></div>
+    <input type="text" id="messageInput" placeholder="Напиши что-то...">
+    <button onclick="sendMessage()">Отправить</button>
+  </div>
+
+  <script>
+    const API_URL = "https://api-inference.huggingface.co/models/facebook/blenderbot-400M-distill";
+
+    async function sendMessage() {
+      const input = document.getElementById("messageInput");
+      const text = input.value.trim();
+      if (!text) return;
+
+      addMessage("Вы", text, "user");
+      input.value = "";
+
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({inputs: text})
+        });
+        const data = await res.json();
+        addMessage("Novasi", data[0]?.generated_text || "Нет ответа", "bot");
+      } catch (e) {
+        addMessage("Ошибка", e.message, "bot");
+      }
+    }
+
+    function addMessage(sender, text, cls) {
+      const div = document.getElementById("messages");
+      const msg = document.createElement("div");
+      msg.className = "msg " + cls;
+      msg.innerHTML = `<b>${sender}:</b> ${text}`;
+      div.appendChild(msg);
+      div.scrollTop = div.scrollHeight;
+    }
+  </script>
+</body>
+</html>
